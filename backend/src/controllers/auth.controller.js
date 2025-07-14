@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 // Import user model
 import User from "../models/user.model.js";
 import { generateToken } from "../lib/utils.js";
+import cloudinary from "../lib/coudinary.js";
 
+// MARK: Signup
 export const signup = async (req, res) => {
     // Handle user signup logic here
     const { username, fullname, email, password } = req.body;
@@ -53,6 +55,7 @@ export const signup = async (req, res) => {
     }
 }
 
+// MARK: Login
 export const login = async (req, res) => {
     // Handle user login logic here
     const { email, password } = req.body;
@@ -81,7 +84,48 @@ export const login = async (req, res) => {
     }
 }
 
+// MARK: Logout
 export const logout = (req, res) => {
     // Handle user logout logic here
-    res.send("Logout Page");
+    try {
+        res.cookie("jwt", "", { 
+            maxAge: 0, // Set cookie to expire immediately 
+        });
+        return res.status(200).send("User logged out successfully");
+    } catch (error) {
+        console.log("Error in logout:", error.message);
+        return res.status(500).send("Internal Server Error");
+    }
+}
+
+// MARK: Update
+export const update = async (req, res) => {
+    // Use cloudinary.com to upload profile images onto the server
+
+    try {
+        const {profilePic} = req.body;
+        const userId = req.user._id; // Get user ID from the request object
+
+        if (!profilePic) {
+            return res.status(400).send("Profile picture is required");
+        };
+
+        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        // { new: true } gives you the user information post-update
+        const updatedUser = await User.findByIdAndUpdate(userId, {profilePic: uploadResponse.secure_url}, {new: true});
+
+        return res.status(200).json(updatedUser);
+    } catch (err) {
+        console.log("Error in update:", err.message);
+        return res.status(500).send("Internal Server Error");
+    }
+};
+
+export const checkAuth = (req, res) => {
+    try {
+        return res.status(200).json(req.user);
+    } catch (error) {
+        console.log("Error in checkAuth:", error.message);
+        return res.status(500).send("Internal Server Error");
+    }
 }
