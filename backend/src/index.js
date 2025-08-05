@@ -14,6 +14,11 @@ const app = express();
 
 const PORT = process.env.PORT || 5001;
 
+// Increase limit for JSON and URL-encoded bodies
+app.use(express.json({ limit: '10mb' })); // or higher if needed
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
